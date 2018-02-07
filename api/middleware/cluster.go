@@ -9,6 +9,7 @@ func NodeReady() macaron.Handler {
 	return func(c *Context) {
 		if !cluster.Manager.IsReady() {
 			c.Error(503, "node not ready")
+		} else {
 		}
 	}
 }

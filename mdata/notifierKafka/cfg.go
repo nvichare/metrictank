@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Shopify/sarama"
+	confluent "github.com/confluentinc/confluent-kafka-go/kafka"
 	part "github.com/grafana/metrictank/cluster/partitioner"
 	"github.com/grafana/metrictank/kafka"
 	"github.com/grafana/metrictank/stats"
@@ -16,24 +16,33 @@ import (
 )
 
 var Enabled bool
-var brokerStr string
-var brokers []string
-var topic string
-var offsetStr string
-var dataDir string
-var config *sarama.Config
-var offsetDuration time.Duration
-var offsetCommitInterval time.Duration
-var partitionStr string
-var partitions []int32
-var partitioner *part.Kafka
-var partitionScheme string
-var bootTimeOffsets map[int32]int64
 var backlogProcessTimeout time.Duration
 var backlogProcessTimeoutStr string
-var partitionOffset map[int32]*stats.Gauge64
-var partitionLogSize map[int32]*stats.Gauge64
+var batchNumMessages int
+var bootTimeOffsets map[int32]int64
+var brokerStr string
+var bufferMaxMs int
+var channelBufferSize int
+var config confluent.ConfigMap
+var dataDir string
+var fetchMin int
+var maxWaitMs int
+var metadataBackoffTime int
+var metadataRetries int
+var metadataTimeout int
+var netMaxOpenRequests int
+var offsetCommitInterval time.Duration
+var offsetDuration time.Duration
+var offsetStr string
 var partitionLag map[int32]*stats.Gauge64
+var partitionLogSize map[int32]*stats.Gauge64
+var partitionOffset map[int32]*stats.Gauge64
+var partitionScheme string
+var partitionStr string
+var partitioner *part.Kafka
+var partitions []int32
+var sessionTimeout int
+var topic string
 
 // metric cluster.notifier.kafka.messages-published is a counter of messages published to the kafka cluster notifier
 var messagesPublished = stats.NewCounter32("cluster.notifier.kafka.messages-published")
@@ -44,14 +53,24 @@ var messagesSize = stats.NewMeter32("cluster.notifier.kafka.message_size", false
 func init() {
 	fs := flag.NewFlagSet("kafka-cluster", flag.ExitOnError)
 	fs.BoolVar(&Enabled, "enabled", false, "")
-	fs.StringVar(&brokerStr, "brokers", "kafka:9092", "tcp address for kafka (may be given multiple times as comma separated list)")
-	fs.StringVar(&topic, "topic", "metricpersist", "kafka topic")
-	fs.StringVar(&partitionStr, "partitions", "*", "kafka partitions to consume. use '*' or a comma separated list of id's. This should match the partitions used for kafka-mdm-in")
-	fs.StringVar(&partitionScheme, "partition-scheme", "bySeries", "method used for partitioning metrics. This should match the settings of tsdb-gw. (byOrg|bySeries)")
-	fs.StringVar(&offsetStr, "offset", "last", "Set the offset to start consuming from. Can be one of newest, oldest,last or a time duration")
-	fs.StringVar(&dataDir, "data-dir", "", "Directory to store partition offsets index")
 	fs.DurationVar(&offsetCommitInterval, "offset-commit-interval", time.Second*5, "Interval at which offsets should be saved.")
+	fs.IntVar(&batchNumMessages, "batch-num-messages", 10000, "Maximum number of messages batched in one MessageSet")
+	fs.IntVar(&bufferMaxMs, "metrics-buffer-max-ms", 100, "Delay in milliseconds to wait for messages in the producer queue to accumulate before constructing message batches (MessageSets) to transmit to brokers")
+	fs.IntVar(&channelBufferSize, "channel-buffer-size", 1000000, "Maximum number of messages allowed on the producer queue")
+	fs.IntVar(&fetchMin, "consumer-fetch-min", 1, "Minimum number of bytes the broker responds with. If fetch.wait.max.ms expires the accumulated data will be sent to the client regardless of this setting")
+	fs.IntVar(&maxWaitMs, "consumer-max-wait-ms", 100, "Maximum time the broker may wait to fill the response with fetch.min.bytes")
+	fs.IntVar(&metadataBackoffTime, "metadata-backoff-time", 500, "Time to wait between attempts to fetch metadata in ms")
+	fs.IntVar(&metadataRetries, "metadata-retries", 5, "Number of retries to fetch metadata in case of failure")
+	fs.IntVar(&metadataTimeout, "consumer-metadata-timeout-ms", 10000, "Maximum time to wait for the broker to send its metadata in ms")
+	fs.IntVar(&netMaxOpenRequests, "net-max-open-requests", 100, "Maximum number of in-flight requests per broker connection. This is a generic property applied to all broker communication, however it is primarily relevant to produce requests.")
+	fs.IntVar(&sessionTimeout, "consumer-session-timeout", 30000, "Client group session and failure detection timeout in ms")
 	fs.StringVar(&backlogProcessTimeoutStr, "backlog-process-timeout", "60s", "Maximum time backlog processing can block during metrictank startup.")
+	fs.StringVar(&brokerStr, "brokers", "kafka:9092", "tcp address for kafka (may be given multiple times as comma separated list)")
+	fs.StringVar(&dataDir, "data-dir", "", "Directory to store partition offsets index")
+	fs.StringVar(&offsetStr, "offset", "oldest", "Set the offset to start consuming from. Can be one of newest, oldest or a time duration")
+	fs.StringVar(&partitionScheme, "partition-scheme", "bySeries", "method used for partitioning metrics. This should match the settings of tsdb-gw. (byOrg|bySeries)")
+	fs.StringVar(&partitionStr, "partitions", "*", "kafka partitions to consume. use '*' or a comma separated list of id's. This should match the partitions used for kafka-mdm-in")
+	fs.StringVar(&topic, "topic", "metricpersist", "kafka topic")
 	globalconf.Register("kafka-cluster", fs)
 }
 
@@ -59,31 +78,16 @@ func ConfigProcess(instance string) {
 	if !Enabled {
 		return
 	}
+
+	if offsetCommitInterval == 0 {
+		log.Fatal(4, "kafkamdm: offset-commit-interval must be greater then 0")
+	}
+
+	if maxWaitMs == 0 {
+		log.Fatal(4, "kafkamdm: consumer-max-wait-time must be greater then 0")
+	}
+
 	var err error
-	switch offsetStr {
-	case "last":
-	case "oldest":
-	case "newest":
-	default:
-		offsetDuration, err = time.ParseDuration(offsetStr)
-		if err != nil {
-			log.Fatal(4, "kafka-cluster: invalid offest format. %s", err)
-		}
-	}
-	brokers = strings.Split(brokerStr, ",")
-
-	config = sarama.NewConfig()
-	config.ClientID = instance + "-cluster"
-	config.Version = sarama.V0_10_0_0
-	config.Producer.RequiredAcks = sarama.WaitForAll // Wait for all in-sync replicas to ack the message
-	config.Producer.Retry.Max = 10                   // Retry up to 10 times to produce the message
-	config.Producer.Compression = sarama.CompressionSnappy
-	config.Producer.Return.Successes = true
-	err = config.Validate()
-	if err != nil {
-		log.Fatal(2, "kafka-cluster invalid consumer config: %s", err)
-	}
-
 	backlogProcessTimeout, err = time.ParseDuration(backlogProcessTimeoutStr)
 	if err != nil {
 		log.Fatal(4, "kafka-cluster: unable to parse backlog-process-timeout. %s", err)
@@ -94,47 +98,65 @@ func ConfigProcess(instance string) {
 		log.Fatal(4, "kafka-cluster: failed to initialize partitioner. %s", err)
 	}
 
-	if partitionStr != "*" {
+	switch offsetStr {
+	case "oldest":
+	case "newest":
+	default:
+		offsetDuration, err = time.ParseDuration(offsetStr)
+		if err != nil {
+			log.Fatal(4, "kafka-cluster: invalid offest format. %s", err)
+		}
+	}
+
+	config := kafka.GetConfig(brokerStr, "snappy", batchNumMessages, bufferMaxMs, channelBufferSize, fetchMin, netMaxOpenRequests, maxWaitMs, sessionTimeout)
+	client, err := confluent.NewConsumer(config)
+	if err != nil {
+		log.Fatal(4, "failed to initialize kafka client. %s", err)
+	}
+	defer client.Close()
+
+	topics := []string{topic}
+	availPartsByTopic, err := kafka.GetPartitions(client, topics, metadataRetries, metadataBackoffTime, metadataTimeout)
+	if err != nil {
+		log.Fatal(4, "kafka-cluster: %s", err.Error())
+	}
+
+	var availParts []int32
+	for _, topic := range topics {
+		for _, part := range availPartsByTopic[topic] {
+			availParts = append(availParts, part)
+		}
+	}
+
+	log.Info("kafka-cluster: available partitions %v", availPartsByTopic)
+	if partitionStr == "*" {
+		partitions = availParts
+	} else {
 		parts := strings.Split(partitionStr, ",")
 		for _, part := range parts {
 			i, err := strconv.Atoi(part)
 			if err != nil {
-				log.Fatal(4, "kafka-cluster: could not parse partition %q. partitions must be '*' or a comma separated list of id's", part)
+				log.Fatal(4, "could not parse partition %q. partitions must be '*' or a comma separated list of id's", part)
 			}
 			partitions = append(partitions, int32(i))
 		}
-	}
-	// validate our partitions
-	client, err := sarama.NewClient(brokers, config)
-	if err != nil {
-		log.Fatal(4, "kafka-cluster failed to create client. %s", err)
-	}
-	defer client.Close()
-
-	availParts, err := kafka.GetPartitions(client, []string{topic})
-	if err != nil {
-		log.Fatal(4, "kafka-cluster: %s", err.Error())
-	}
-	if partitionStr == "*" {
-		partitions = availParts
-	} else {
 		missing := kafka.DiffPartitions(partitions, availParts)
 		if len(missing) > 0 {
 			log.Fatal(4, "kafka-cluster: configured partitions not in list of available partitions. missing %v", missing)
 		}
 	}
 
-	// initialize our offset metrics
-	partitionOffset = make(map[int32]*stats.Gauge64)
-	partitionLogSize = make(map[int32]*stats.Gauge64)
-	partitionLag = make(map[int32]*stats.Gauge64)
-
 	// get the "newest" offset for all partitions.
 	// when booting up, we will delay consuming metrics until we have
 	// caught up to these offsets.
 	bootTimeOffsets = make(map[int32]int64)
+
+	// initialize our offset metrics
+	partitionOffset = make(map[int32]*stats.Gauge64)
+	partitionLogSize = make(map[int32]*stats.Gauge64)
+	partitionLag = make(map[int32]*stats.Gauge64)
 	for _, part := range partitions {
-		offset, err := client.GetOffset(topic, part, sarama.OffsetNewest)
+		_, offset, err := client.QueryWatermarkOffsets(topic, part, metadataTimeout)
 		if err != nil {
 			log.Fatal(4, "kakfa-cluster: failed to get newest offset for topic %s part %d: %s", topic, part, err)
 		}
