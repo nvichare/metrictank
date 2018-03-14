@@ -171,6 +171,7 @@ func ConfigProcess(instance string) {
 
 func New() *KafkaMdm {
 	config := kafka.GetConfig(brokerStr, "none", batchNumMessages, bufferMaxMs, channelBufferSize, fetchMin, netMaxOpenRequests, maxWaitMs, sessionTimeout)
+	config.SetKey("debug", "broker,topic")
 	consumer, err := confluent.NewConsumer(config)
 	if err != nil {
 		log.Fatal(4, "failed to initialize kafka consumer. %s", err)
