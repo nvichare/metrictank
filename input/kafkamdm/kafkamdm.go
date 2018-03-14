@@ -115,6 +115,8 @@ func ConfigProcess(instance string) {
 	}
 
 	config := kafka.GetConfig(brokerStr, "none", batchNumMessages, bufferMaxMs, channelBufferSize, fetchMin, netMaxOpenRequests, maxWaitMs, sessionTimeout)
+	config.SetKey("enable.auto.offset.store", false)
+	config.SetKey("enable.auto.commit", false)
 	client, err := confluent.NewConsumer(config)
 	if err != nil {
 		log.Fatal(4, "failed to initialize kafka client. %s", err)
@@ -172,6 +174,8 @@ func ConfigProcess(instance string) {
 func New() *KafkaMdm {
 	config := kafka.GetConfig(brokerStr, "none", batchNumMessages, bufferMaxMs, channelBufferSize, fetchMin, netMaxOpenRequests, maxWaitMs, sessionTimeout)
 	config.SetKey("debug", "broker,topic")
+	config.SetKey("enable.auto.offset.store", false)
+	config.SetKey("enable.auto.commit", false)
 	consumer, err := confluent.NewConsumer(config)
 	if err != nil {
 		log.Fatal(4, "failed to initialize kafka consumer. %s", err)

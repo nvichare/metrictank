@@ -108,6 +108,8 @@ func ConfigProcess(instance string) {
 	}
 
 	config := kafka.GetConfig(brokerStr, "snappy", batchNumMessages, bufferMaxMs, channelBufferSize, fetchMin, netMaxOpenRequests, maxWaitMs, sessionTimeout)
+	config.SetKey("enable.auto.offset.store", false)
+	config.SetKey("enable.auto.commit", false)
 	config.SetKey("go.events.channel.enable", true)
 	config.SetKey("go.application.rebalance.enable", true)
 	client, err := confluent.NewConsumer(config)
