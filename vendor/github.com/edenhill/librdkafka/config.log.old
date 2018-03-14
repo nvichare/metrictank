@@ -1,0 +1,91 @@
+# configure exec: ./configure 
+# On 2018年 01月 18日 星期四 21:45:48 KST
+DBG: ccenv: WITH_CC:  --version failed: mklove/modules/configure.base: line 1184: --version: command not found
+DBG: Check ccenv (WITH_CC, action cont (originally cont)) failed: command ' --version' failed:
+mklove/modules/configure.base: line 1184: --version: command not found
+DBG: cxxenv: WITH_CXX:  --version failed: mklove/modules/configure.base: line 1184: --version: command not found
+DBG: Check cxxenv (WITH_CXX, action cont (originally cont)) failed: command ' --version' failed:
+mklove/modules/configure.base: line 1184: --version: command not found
+DBG: Compile check PIC (HAVE_PIC): gcc  -g -O2 -Wall -Werror _mkltmpgDBCPi.c -o _mkltmpgDBCPi.c.o   -fPIC
+DBG: Compile check gnulib (WITH_GNULD): gcc  -g -O2 -fPIC -Wall -Werror _mkltmpEwXZts.c -o _mkltmpEwXZts.c.o   -shared -Wl,-soname,mkltest.0
+DBG: Compile check ldsflagvs (): gcc  -g -O2 -fPIC -Wall -Werror _mkltmpg8diTL.c -o _mkltmpg8diTL.c.o   -shared -Wl,--version-script=_mkltmpIHTrlP
+DBG: Compile check __atomic_32 (HAVE_ATOMICS_32): gcc  -g -O2 -fPIC -Wall -Werror _mkltmp9DMNsM.c -o _mkltmp9DMNsM.c.o   
+DBG: Compile check __atomic_64 (HAVE_ATOMICS_64): gcc  -g -O2 -fPIC -Wall -Werror _mkltmpAPCHQI.c -o _mkltmpAPCHQI.c.o   
+DBG: Compile check socket (): gcc  -g -O2 -fPIC -Wall -Wsign-compare -Wfloat-equal -Wpointer-arith -Wcast-align -Wall -Werror _mkltmp89tU0U.c -o _mkltmp89tU0U.c.o   
+DBG: pkg-config check libpthread (): pkg-config --short-errors --cflags libpthread
+DBG: 'pkg-config --short-errors --cflags libpthread' failed: No package 'libpthread' found
+DBG: Check libpthread_PKGCONFIG (, action cont (originally cont)) failed: 'pkg-config --short-errors --cflags libpthread' failed:
+No package 'libpthread' found
+DBG: Compile check libpthread (): gcc  -g -O2 -fPIC -Wall -Wsign-compare -Wfloat-equal -Wpointer-arith -Wcast-align -Wall -Werror _mkltmpNayCwV.c -o _mkltmpNayCwV.c.o   -lpthread
+DBG: pkg-config check zlib (): pkg-config --short-errors --cflags zlib
+DBG: pkg-config check libcrypto (): pkg-config --short-errors --cflags libcrypto
+DBG: pkg-config check liblz4 (): pkg-config --short-errors --cflags liblz4
+DBG: 'pkg-config --short-errors --cflags liblz4' failed: No package 'liblz4' found
+DBG: Check liblz4_PKGCONFIG (, action cont (originally cont)) failed: 'pkg-config --short-errors --cflags liblz4' failed:
+No package 'liblz4' found
+DBG: Compile check liblz4 (WITH_LZ4_EXT): gcc  -g -O2 -fPIC -Wall -Wsign-compare -Wfloat-equal -Wpointer-arith -Wcast-align -Wall -Werror _mkltmpCcmDss.c -o _mkltmpCcmDss.c.o   -llz4
+DBG: compile check for liblz4 (WITH_LZ4_EXT) failed: gcc  -g -O2 -fPIC -Wall -Wsign-compare -Wfloat-equal -Wpointer-arith -Wcast-align -Wall -Werror _mkltmpCcmDss.c -o _mkltmpCcmDss.c.o   -llz4: _mkltmpCcmDss.c:1:22: fatal error: lz4frame.h: No such file or directory
+compilation terminated.
+DBG: Check liblz4 (WITH_LZ4_EXT, action disable (originally disable)) failed: compile check failed:
+CC: CC
+flags: -llz4
+gcc  -g -O2 -fPIC -Wall -Wsign-compare -Wfloat-equal -Wpointer-arith -Wcast-align -Wall -Werror _mkltmpCcmDss.c -o _mkltmpCcmDss.c.o   -llz4:
+_mkltmpCcmDss.c:1:22: fatal error: lz4frame.h: No such file or directory
+compilation terminated.
+source: #include <lz4frame.h>
+DBG: pkg-config check libssl (): pkg-config --short-errors --cflags libssl
+DBG: pkg-config check libsasl2 (): pkg-config --short-errors --cflags libsasl2
+DBG: Compile check crc32chw (WITH_CRC32C_HW): gcc  -g -O2 -fPIC -Wall -Wsign-compare -Wfloat-equal -Wpointer-arith -Wcast-align -Wall -Werror _mkltmpx84iVI.c -o _mkltmpx84iVI.c.o   
+DBG: Compile check regex (HAVE_REGEX): gcc  -g -O2 -fPIC -Wall -Wsign-compare -Wfloat-equal -Wpointer-arith -Wcast-align -Wall -Werror _mkltmp5fcCa5.c -o _mkltmp5fcCa5.c.o   
+DBG: pkg-config check librt (): pkg-config --short-errors --cflags librt
+DBG: 'pkg-config --short-errors --cflags librt' failed: No package 'librt' found
+DBG: Check librt_PKGCONFIG (, action cont (originally cont)) failed: 'pkg-config --short-errors --cflags librt' failed:
+No package 'librt' found
+DBG: Compile check librt (): gcc  -g -O2 -fPIC -Wall -Wsign-compare -Wfloat-equal -Wpointer-arith -Wcast-align -Wall -Werror _mkltmpNNbs8l.c -o _mkltmpNNbs8l.c.o   -lrt
+DBG: Compile check strndup (HAVE_STRNDUP): gcc  -g -O2 -fPIC -Wall -Wsign-compare -Wfloat-equal -Wpointer-arith -Wcast-align -Wall -Werror _mkltmpBUZ2rf.c -o _mkltmpBUZ2rf.c.o   
+DBG: Compile check strerror_r (HAVE_STRERROR_R): gcc  -g -O2 -fPIC -Wall -Wsign-compare -Wfloat-equal -Wpointer-arith -Wcast-align -Wall -Werror _mkltmpGu6qUO.c -o _mkltmpGu6qUO.c.o   
+DBG: pkg-config check libdl (): pkg-config --short-errors --cflags libdl
+DBG: 'pkg-config --short-errors --cflags libdl' failed: No package 'libdl' found
+DBG: Check libdl_PKGCONFIG (, action cont (originally cont)) failed: 'pkg-config --short-errors --cflags libdl' failed:
+No package 'libdl' found
+DBG: Compile check libdl (WITH_LIBDL): gcc  -g -O2 -fPIC -Wall -Wsign-compare -Wfloat-equal -Wpointer-arith -Wcast-align -Wall -Werror _mkltmpCxlrbR.c -o _mkltmpCxlrbR.c.o   -ldl
+DBG: Compile check pthread_setname_gnu (HAVE_PTHREAD_SETNAME_GNU): gcc  -g -O2 -fPIC -Wall -Wsign-compare -Wfloat-equal -Wpointer-arith -Wcast-align -Wall -Werror _mkltmpbHdi0g.c -o _mkltmpbHdi0g.c.o   -D_GNU_SOURCE -lpthread
+DBG: tput reports color support: true
+DBG: Using color escape sequences from tput
+DBG: Loading module builtin (required by base) from mklove/modules/configure.builtin
+DBG: Loading module host (required by base) from mklove/modules/configure.host
+DBG: Loading module cc (required by base) from mklove/modules/configure.cc
+DBG: Loading module librdkafka (required by base) from configure.librdkafka
+DBG: Loading module cxx (required by librdkafka) from mklove/modules/configure.cxx
+DBG: Loading module lib (required by librdkafka) from mklove/modules/configure.lib
+DBG: Loading module pic (required by lib) from mklove/modules/configure.pic
+DBG: Loading module atomics (required by librdkafka) from mklove/modules/configure.atomics
+DBG: Loading module good_cflags (required by librdkafka) from mklove/modules/configure.good_cflags
+DBG: Loading module socket (required by librdkafka) from mklove/modules/configure.socket
+DBG: Loading module parseversion (required by librdkafka) from mklove/modules/configure.parseversion
+DBG: tput reports color support: true
+DBG: Using color escape sequences from tput
+DBG: Loading module builtin (required by base) from mklove/modules/configure.builtin
+DBG: Loading module host (required by base) from mklove/modules/configure.host
+DBG: Loading module cc (required by base) from mklove/modules/configure.cc
+DBG: Loading module librdkafka (required by base) from configure.librdkafka
+DBG: Loading module cxx (required by librdkafka) from mklove/modules/configure.cxx
+DBG: Loading module lib (required by librdkafka) from mklove/modules/configure.lib
+DBG: Loading module pic (required by lib) from mklove/modules/configure.pic
+DBG: Loading module atomics (required by librdkafka) from mklove/modules/configure.atomics
+DBG: Loading module good_cflags (required by librdkafka) from mklove/modules/configure.good_cflags
+DBG: Loading module socket (required by librdkafka) from mklove/modules/configure.socket
+DBG: Loading module parseversion (required by librdkafka) from mklove/modules/configure.parseversion
+DBG: tput reports color support: true
+DBG: Using color escape sequences from tput
+DBG: Loading module builtin (required by base) from mklove/modules/configure.builtin
+DBG: Loading module host (required by base) from mklove/modules/configure.host
+DBG: Loading module cc (required by base) from mklove/modules/configure.cc
+DBG: Loading module librdkafka (required by base) from configure.librdkafka
+DBG: Loading module cxx (required by librdkafka) from mklove/modules/configure.cxx
+DBG: Loading module lib (required by librdkafka) from mklove/modules/configure.lib
+DBG: Loading module pic (required by lib) from mklove/modules/configure.pic
+DBG: Loading module atomics (required by librdkafka) from mklove/modules/configure.atomics
+DBG: Loading module good_cflags (required by librdkafka) from mklove/modules/configure.good_cflags
+DBG: Loading module socket (required by librdkafka) from mklove/modules/configure.socket
+DBG: Loading module parseversion (required by librdkafka) from mklove/modules/configure.parseversion

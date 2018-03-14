@@ -41,7 +41,8 @@
 
 
 /* @cond NO_DOC */
-#pragma once
+#ifndef _RDKAFKA_H_
+#define _RDKAFKA_H_
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -147,7 +148,7 @@ typedef SSIZE_T ssize_t;
  * @remark This value should only be used during compile time,
  *         for runtime checks of version use rd_kafka_version()
  */
-#define RD_KAFKA_VERSION  0x000b0401
+#define RD_KAFKA_VERSION  0x000b04c9
 
 /**
  * @brief Returns the librdkafka version as integer.
@@ -4207,3 +4208,4 @@ rd_kafka_interceptor_add_on_request_sent (
 #ifdef __cplusplus
 }
 #endif
+#endif /* _RDKAFKA_H_ */

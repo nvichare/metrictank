@@ -617,7 +617,11 @@ static const struct rd_kafka_property rd_kafka_properties[] = {
         /* Global consumer properties */
         { _RK_GLOBAL|_RK_CONSUMER, "enable.auto.commit", _RK_C_BOOL,
           _RK(enable_auto_commit),
-          "Automatically and periodically commit offsets in the background.",
+          "Automatically and periodically commit offsets in the background. "
+          "Note: setting this to false does not prevent the consumer from "
+          "fetching previously committed start offsets. To circumvent this "
+          "behaviour set specific start offsets per partition in the call "
+          "to assign().",
           0, 1, 1 },
         { _RK_GLOBAL|_RK_CONSUMER, "auto.commit.interval.ms", _RK_C_INT,
 	  _RK(auto_commit_interval_ms),
@@ -791,7 +795,7 @@ static const struct rd_kafka_property rd_kafka_properties[] = {
 	  "*0*=Broker does not send any response/ack to client, "
 	  "*1*=Only the leader broker will need to ack the message, "
 	  "*-1* or *all*=broker will block until message is committed by all "
-	  "in sync replicas (ISRs) or broker's `in.sync.replicas` "
+	  "in sync replicas (ISRs) or broker's `min.insync.replicas` "
 	  "setting before sending response. ",
 	  -1, 1000, 1,
 	  .s2i = {

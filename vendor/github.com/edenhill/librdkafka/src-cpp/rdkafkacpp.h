@@ -26,7 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#ifndef _RDKAFKACPP_H_
+#define _RDKAFKACPP_H_
 
 /**
  * @file rdkafkacpp.h
@@ -98,7 +99,7 @@ namespace RdKafka {
  * @remark This value should only be used during compile time,
  *         for runtime checks of version use RdKafka::version()
  */
-#define RD_KAFKA_VERSION  0x000b0401
+#define RD_KAFKA_VERSION  0x000b04c9
 
 /**
  * @brief Returns the librdkafka version as integer.
@@ -2280,3 +2281,4 @@ class Metadata {
 
 }
 
+#endif /* _RDKAFKACPP_H_ */

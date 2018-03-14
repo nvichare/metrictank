@@ -25,7 +25,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#pragma once
+#ifndef _RDKAFKA_PARTITION_H_
+#define _RDKAFKA_PARTITION_H_
 
 #include "rdkafka_topic.h"
 #include "rdkafka_cgrp.h"
@@ -345,7 +346,8 @@ int  rd_kafka_toppar_retry_msgq (rd_kafka_toppar_t *rktp,
 void rd_kafka_toppar_insert_msgq (rd_kafka_toppar_t *rktp,
                                   rd_kafka_msgq_t *rkmq);
 void rd_kafka_toppar_enq_error (rd_kafka_toppar_t *rktp,
-                                rd_kafka_resp_err_t err);
+                                rd_kafka_resp_err_t err,
+                                const char *reason);
 shptr_rd_kafka_toppar_t *rd_kafka_toppar_get0 (const char *func, int line,
                                                const rd_kafka_itopic_t *rkt,
                                                int32_t partition,
@@ -635,3 +637,5 @@ int rd_kafka_partition_leader_cmp (const void *_a, const void *_b) {
         const struct rd_kafka_partition_leader *a = _a, *b = _b;
         return rd_kafka_broker_cmp(a->rkb, b->rkb);
 }
+
+#endif /* _RDKAFKA_PARTITION_H_ */
