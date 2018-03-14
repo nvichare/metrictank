@@ -15,8 +15,6 @@ func GetConfig(broker, compression string, batchNumMessages, bufferMaxMs, buffer
 		"group.id":                              uuid.NewV4().String(),
 		"fetch.min.bytes":                       fetchMin,
 		"fetch.wait.max.ms":                     maxWait,
-		"go.application.rebalance.enable":       true,
-		"go.events.channel.enable":              true,
 		"max.in.flight.requests.per.connection": maxOpenRequests,
 		"queue.buffering.max.messages":          bufferSize,
 		"retries":                               10,

@@ -13,6 +13,7 @@ import (
 
 	confluent "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/grafana/metrictank/idx"
+	"github.com/grafana/metrictank/kafka"
 	"github.com/grafana/metrictank/mdata"
 	"github.com/grafana/metrictank/util"
 	"github.com/raintank/worldping-api/pkg/log"
@@ -37,12 +38,15 @@ type NotifierKafka struct {
 var currentOffsets map[int32]*int64
 
 func New(instance string, metrics mdata.Metrics, idx idx.MetricIndex) *NotifierKafka {
-	consumer, err := confluent.NewConsumer(&config)
+	config := kafka.GetConfig(brokerStr, "snappy", batchNumMessages, bufferMaxMs, channelBufferSize, fetchMin, netMaxOpenRequests, maxWaitMs, sessionTimeout)
+	config.SetKey("go.events.channel.enable", true)
+	config.SetKey("go.application.rebalance.enable", true)
+	consumer, err := confluent.NewConsumer(config)
 	if err != nil {
 		log.Fatal(2, "kafka-cluster failed to initialize consumer: %s", err)
 	}
 
-	producer, err := confluent.NewProducer(&config)
+	producer, err := confluent.NewProducer(kafka.GetConfig(brokerStr, "snappy", batchNumMessages, bufferMaxMs, channelBufferSize, fetchMin, netMaxOpenRequests, maxWaitMs, sessionTimeout))
 	if err != nil {
 		log.Fatal(2, "kafka-cluster failed to initialize producer: %s", err)
 	}

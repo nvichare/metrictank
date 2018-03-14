@@ -23,7 +23,6 @@ var bootTimeOffsets map[int32]int64
 var brokerStr string
 var bufferMaxMs int
 var channelBufferSize int
-var config confluent.ConfigMap
 var dataDir string
 var fetchMin int
 var maxWaitMs int
@@ -109,6 +108,8 @@ func ConfigProcess(instance string) {
 	}
 
 	config := kafka.GetConfig(brokerStr, "snappy", batchNumMessages, bufferMaxMs, channelBufferSize, fetchMin, netMaxOpenRequests, maxWaitMs, sessionTimeout)
+	config.SetKey("go.events.channel.enable", true)
+	config.SetKey("go.application.rebalance.enable", true)
 	client, err := confluent.NewConsumer(config)
 	if err != nil {
 		log.Fatal(4, "failed to initialize kafka client. %s", err)
