@@ -173,9 +173,10 @@ func ConfigProcess(instance string) {
 
 func New() *KafkaMdm {
 	config := kafka.GetConfig(brokerStr, "none", batchNumMessages, bufferMaxMs, channelBufferSize, fetchMin, netMaxOpenRequests, maxWaitMs, sessionTimeout)
-	config.SetKey("debug", "broker,topic")
+	//config.SetKey("debug", "all")
 	config.SetKey("enable.auto.offset.store", false)
 	config.SetKey("enable.auto.commit", false)
+	config.SetKey("go.events.channel.enable", true)
 	consumer, err := confluent.NewConsumer(config)
 	if err != nil {
 		log.Fatal(4, "failed to initialize kafka consumer. %s", err)
@@ -233,6 +234,7 @@ func (k *KafkaMdm) startConsumer() error {
 		}
 	}
 
+	fmt.Println(fmt.Sprintf("assigning topic partitions %+v", topicPartitions))
 	return k.consumer.Assign(topicPartitions)
 }
 
@@ -303,6 +305,7 @@ func (k *KafkaMdm) consume() {
 	for {
 		select {
 		case ev := <-events:
+			fmt.Println("kafka-mdm: Received event: %+v", ev)
 			switch e := ev.(type) {
 			case confluent.AssignedPartitions:
 				k.consumer.Assign(e.Partitions)
@@ -311,6 +314,7 @@ func (k *KafkaMdm) consume() {
 				k.consumer.Unassign()
 				log.Info("kafka-mdm: Revoked partitions: %+v", e)
 			case confluent.PartitionEOF:
+				fmt.Println(fmt.Sprintf("EOF of partition %d", e.Partition))
 			case *confluent.Message:
 				topic = *e.TopicPartition.Topic
 				partition = e.TopicPartition.Partition
@@ -319,6 +323,7 @@ func (k *KafkaMdm) consume() {
 					log.Debug("kafka-mdm: received message: Topic %s, Partition: %d, Offset: %d, Key: %x", topic, partition, offset, e.Key)
 				}
 
+				fmt.Println(fmt.Sprintf("handling message: %+v", e.Value))
 				k.handleMsg(e.Value, partition)
 
 				if currentTopicOffsets, ok = currentOffsets[topic]; !ok {
