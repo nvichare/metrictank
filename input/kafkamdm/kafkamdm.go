@@ -264,12 +264,14 @@ func (k *KafkaMdm) monitorLag() {
 		for topic, partitions := range currentOffsets {
 			for partition := range partitions {
 				offset := atomic.LoadInt64(currentOffsets[topic][partition])
+				fmt.Println(fmt.Sprintf("setting offset for partition %d: %d", partition, offset))
 				k.lagMonitor.StoreOffset(partition, offset, ts)
 				partitionOffset[partition].Set(int(offset))
-				newest, _, err := k.tryGetOffset(topic, partition, int64(confluent.OffsetEnd), 3, time.Second)
+				_, newest, err := k.tryGetOffset(topic, partition, int64(confluent.OffsetEnd), 3, time.Second)
 				if err == nil {
 					partitionLogSize[partition].Set(int(newest))
 					lag := int(newest - offset)
+					fmt.Println(fmt.Sprintf("setting lag for partition %d: %d", partition, lag))
 					partitionLag[partition].Set(lag)
 					k.lagMonitor.StoreLag(partition, lag)
 				} else {
@@ -324,7 +326,7 @@ func (k *KafkaMdm) consume() {
 					log.Debug("kafka-mdm: received message: Topic %s, Partition: %d, Offset: %d, Key: %x", topic, partition, offset, e.Key)
 				}
 
-				fmt.Println(fmt.Sprintf("handling message: %+v", e.Value))
+				//fmt.Println(fmt.Sprintf("handling message: %+v", e.Value))
 				k.handleMsg(e.Value, partition)
 
 				if currentTopicOffsets, ok = currentOffsets[topic]; !ok {
