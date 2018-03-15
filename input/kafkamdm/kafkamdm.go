@@ -177,6 +177,7 @@ func New() *KafkaMdm {
 	config.SetKey("enable.auto.offset.store", false)
 	config.SetKey("enable.auto.commit", false)
 	config.SetKey("go.events.channel.enable", true)
+	config.SetKey("go.application.rebalance.enable", true)
 	consumer, err := confluent.NewConsumer(config)
 	if err != nil {
 		log.Fatal(4, "failed to initialize kafka consumer. %s", err)
@@ -305,7 +306,7 @@ func (k *KafkaMdm) consume() {
 	for {
 		select {
 		case ev := <-events:
-			fmt.Println("kafka-mdm: Received event: %+v", ev)
+			//fmt.Println("kafka-mdm: Received event: %+v", ev)
 			switch e := ev.(type) {
 			case confluent.AssignedPartitions:
 				k.consumer.Assign(e.Partitions)

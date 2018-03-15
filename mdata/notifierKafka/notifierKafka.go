@@ -39,6 +39,8 @@ var currentOffsets map[int32]*int64
 
 func New(instance string, metrics mdata.Metrics, idx idx.MetricIndex) *NotifierKafka {
 	config := kafka.GetConfig(brokerStr, "snappy", batchNumMessages, bufferMaxMs, channelBufferSize, fetchMin, netMaxOpenRequests, maxWaitMs, sessionTimeout)
+	config.SetKey("enable.auto.offset.store", false)
+	config.SetKey("enable.auto.commit", false)
 	config.SetKey("go.events.channel.enable", true)
 	config.SetKey("go.application.rebalance.enable", true)
 	consumer, err := confluent.NewConsumer(config)
