@@ -90,7 +90,6 @@ func (c *NotifierKafka) start() {
 	backlogProcessed := make(chan struct{}, 1)
 	go func() {
 		processBacklog.Wait()
-		//fmt.Println("backlog processed")
 		backlogProcessed <- struct{}{}
 	}()
 
@@ -148,7 +147,6 @@ func (c *NotifierKafka) startConsumer() error {
 		currentOffsets[partition] = &currentOffset
 	}
 
-	//fmt.Println(fmt.Sprintf("assigning %+v", topicPartitions))
 	return c.consumer.Assign(topicPartitions)
 }
 
