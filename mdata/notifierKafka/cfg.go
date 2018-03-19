@@ -2,14 +2,14 @@ package notifierKafka
 
 import (
 	"flag"
-	"fmt"
-	"strconv"
-	"strings"
+	//"fmt"
+	//"strconv"
+	//"strings"
 	"time"
 
-	confluent "github.com/confluentinc/confluent-kafka-go/kafka"
+	//confluent "github.com/confluentinc/confluent-kafka-go/kafka"
 	part "github.com/grafana/metrictank/cluster/partitioner"
-	"github.com/grafana/metrictank/kafka"
+	//"github.com/grafana/metrictank/kafka"
 	"github.com/grafana/metrictank/stats"
 	"github.com/raintank/worldping-api/pkg/log"
 	"github.com/rakyll/globalconf"
@@ -96,75 +96,4 @@ func ConfigProcess(instance string) {
 	if err != nil {
 		log.Fatal(4, "kafka-cluster: failed to initialize partitioner. %s", err)
 	}
-
-	switch offsetStr {
-	case "oldest":
-	case "newest":
-	default:
-		offsetDuration, err = time.ParseDuration(offsetStr)
-		if err != nil {
-			log.Fatal(4, "kafka-cluster: invalid offest format. %s", err)
-		}
-	}
-
-	config := kafka.GetConfig(brokerStr, "snappy", batchNumMessages, bufferMaxMs, channelBufferSize, fetchMin, netMaxOpenRequests, maxWaitMs, sessionTimeout)
-	config.SetKey("enable.auto.offset.store", false)
-	config.SetKey("enable.auto.commit", false)
-	client, err := confluent.NewConsumer(config)
-	if err != nil {
-		log.Fatal(4, "failed to initialize kafka client. %s", err)
-	}
-	defer client.Close()
-
-	topics := []string{topic}
-	availPartsByTopic, err := kafka.GetPartitions(client, topics, metadataRetries, metadataBackoffTime, metadataTimeout)
-	if err != nil {
-		log.Fatal(4, "kafka-cluster: %s", err.Error())
-	}
-
-	var availParts []int32
-	for _, topic := range topics {
-		for _, part := range availPartsByTopic[topic] {
-			availParts = append(availParts, part)
-		}
-	}
-
-	log.Info("kafka-cluster: available partitions %v", availPartsByTopic)
-	if partitionStr == "*" {
-		partitions = availParts
-	} else {
-		parts := strings.Split(partitionStr, ",")
-		for _, part := range parts {
-			i, err := strconv.Atoi(part)
-			if err != nil {
-				log.Fatal(4, "could not parse partition %q. partitions must be '*' or a comma separated list of id's", part)
-			}
-			partitions = append(partitions, int32(i))
-		}
-		missing := kafka.DiffPartitions(partitions, availParts)
-		if len(missing) > 0 {
-			log.Fatal(4, "kafka-cluster: configured partitions not in list of available partitions. missing %v", missing)
-		}
-	}
-
-	// get the "newest" offset for all partitions.
-	// when booting up, we will delay consuming metrics until we have
-	// caught up to these offsets.
-	bootTimeOffsets = make(map[int32]int64)
-
-	// initialize our offset metrics
-	partitionOffset = make(map[int32]*stats.Gauge64)
-	partitionLogSize = make(map[int32]*stats.Gauge64)
-	partitionLag = make(map[int32]*stats.Gauge64)
-	for _, part := range partitions {
-		_, offset, err := client.QueryWatermarkOffsets(topic, part, metadataTimeout)
-		if err != nil {
-			log.Fatal(4, "kakfa-cluster: failed to get newest offset for topic %s part %d: %s", topic, part, err)
-		}
-		bootTimeOffsets[part] = offset
-		partitionOffset[part] = stats.NewGauge64(fmt.Sprintf("cluster.notifier.kafka.partition.%d.offset", part))
-		partitionLogSize[part] = stats.NewGauge64(fmt.Sprintf("cluster.notifier.kafka.partition.%d.log_size", part))
-		partitionLag[part] = stats.NewGauge64(fmt.Sprintf("cluster.notifier.kafka.partition.%d.lag", part))
-	}
-	log.Info("kafka-cluster: consuming from partitions %v", partitions)
 }

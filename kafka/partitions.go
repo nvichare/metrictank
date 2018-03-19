@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"fmt"
 	"time"
 
 	confluent "github.com/confluentinc/confluent-kafka-go/kafka"
@@ -22,15 +23,15 @@ Iter:
 	return diff
 }
 
-func GetPartitions(client *confluent.Consumer, topics []string, retries, backoff, timeout int) (map[string][]int32, error) {
-	partitions := make(map[string][]int32, 0)
+func GetPartitions(client *confluent.Consumer, topics []string, retries, backoff, timeout int) ([]int32, error) {
+	var partitions []int32
 	var ok bool
 	var tm confluent.TopicMetadata
-	for _, topic := range topics {
-		for i := retries; i > 0; i-- {
+	for i, topic := range topics {
+		for retry := retries; retry > 0; retry-- {
 			metadata, err := client.GetMetadata(&topic, false, timeout)
 			if err != nil {
-				log.Warn("kafka: failed to get metadata from kafka client. %s, %d retries", err, i)
+				log.Warn("kafka: failed to get metadata from kafka client. %s, %d retries", err, retry)
 				time.Sleep(time.Duration(backoff) * time.Millisecond)
 				continue
 			}
@@ -39,24 +40,30 @@ func GetPartitions(client *confluent.Consumer, topics []string, retries, backoff
 			// settings after our first GetMetadata call for it. But because the topic creation can take a moment
 			// we'll need to retry a fraction of second later in order to actually get the according metadata.
 			if tm, ok := metadata.Topics[topic]; !ok || tm.Error.Code() == confluent.ErrUnknownTopic {
-				log.Warn("kafka: unknown topic %s, %d retries", topic, i)
+				log.Warn("kafka: unknown topic %s, %d retries", topic, retry)
 				time.Sleep(time.Duration(backoff) * time.Millisecond)
 				continue
 			}
 
 			if tm, ok = metadata.Topics[topic]; !ok || len(tm.Partitions) == 0 {
-				log.Warn("kafka: 0 partitions returned for %s, %d retries", topic, i)
+				log.Warn("kafka: 0 partitions returned for %s, %d retries %d backoffMs", topic, retry, backoff)
 				time.Sleep(time.Duration(backoff) * time.Millisecond)
 				continue
 			}
 
-			partitions[topic] = make([]int32, len(tm.Partitions))
-			for _, partitionMetadata := range tm.Partitions {
-				partitions[topic] = append(partitions[topic], partitionMetadata.ID)
+			if i == 0 {
+				partitions = make([]int32, 0, len(tm.Partitions))
+				for _, partitionMetadata := range tm.Partitions {
+					partitions = append(partitions, partitionMetadata.ID)
+				}
+			} else {
+				if len(tm.Partitions) != len(partitions) {
+					return nil, fmt.Errorf("Configured topics have different partition counts, this is not supported")
+				}
 			}
 		}
 	}
 
-	log.Info("kafka: partitions by topic: %+v", partitions)
+	log.Info("kafka: partitions for topics %+v: %+v", topics, partitions)
 	return partitions, nil
 }
